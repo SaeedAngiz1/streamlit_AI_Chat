@@ -4,14 +4,32 @@ from openai import OpenAI
 # Get API credentials from Streamlit secrets (for Streamlit Cloud) or config.py (for local)
 try:
     # Try Streamlit secrets first (for Streamlit Cloud deployment)
-    API_KEY = st.secrets["ROUTELLM"]["API_KEY"]
-    API_BASE_URL = st.secrets["ROUTELLM"]["API_BASE_URL"]
-except (KeyError, FileNotFoundError):
+    if hasattr(st, "secrets") and "ROUTELLM" in st.secrets:
+        API_KEY = st.secrets["ROUTELLM"]["API_KEY"]
+        API_BASE_URL = st.secrets["ROUTELLM"]["API_BASE_URL"]
+    else:
+        raise KeyError("Secrets not found")
+except (KeyError, AttributeError, FileNotFoundError):
     # Fall back to config.py for local development
     try:
         from config import API_KEY, API_BASE_URL
     except ImportError:
-        st.error("⚠️ API configuration not found. Please set up Streamlit secrets or config.py")
+        st.error("⚠️ API configuration not found!")
+        st.markdown("""
+        ### For Streamlit Cloud:
+        1. Go to your app settings on [share.streamlit.io](https://share.streamlit.io)
+        2. Click on **"Secrets"** in the sidebar
+        3. Add your secrets in TOML format:
+        ```toml
+        [ROUTELLM]
+        API_KEY = "your_actual_api_key_here"
+        API_BASE_URL = "https://routellm.abacus.ai/v1"
+        ```
+        4. Click **"Save"** and the app will automatically redeploy
+        
+        ### For Local Development:
+        Create a `config.py` file with your API key.
+        """)
         st.stop()
 
 # Page configuration
